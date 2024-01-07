@@ -1,4 +1,4 @@
-from b2sdk.v2 import InMemoryAccountInfo, B2Api
+from b2sdk.v2 import InMemoryAccountInfo, B2Api, FileVersion
 import os
 from dotenv import load_dotenv
 
@@ -14,5 +14,8 @@ info = InMemoryAccountInfo()
 if __name__ == "__main__":
     b2_api = B2Api(info)
     b2_api.authorize_account("production", b2_account_id, b2_application_key)
-    buckets = b2_api.list_buckets()
-    print(buckets)
+    bucket = b2_api.get_bucket_by_name("nguylinc")
+    files = bucket.ls()
+    for file in files:
+        file: FileVersion = file[0]
+        print(file.file_name)
