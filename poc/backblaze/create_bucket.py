@@ -8,6 +8,7 @@ load_dotenv()
 # Retrieve B2 credentials from environment variables
 b2_account_id = os.getenv("B2_ACCOUNT_ID")
 b2_application_key = os.getenv("B2_APPLICATION_KEY")
+b2_bucket_name = os.getenv("B2_BUCKET_NAME")
 
 info = InMemoryAccountInfo()
 
@@ -22,3 +23,4 @@ if __name__ == "__main__":
     b2_api.authorize_account("production", b2_account_id, b2_application_key)
     # b2_api.create_bucket("nguylinc", "allPrivate", lifecycle_rules=life_cycle_rules)
     # b2_api.create_bucket("nguylinc-photos", "allPublic", lifecycle_rules=life_cycle_rules)
+    b2_api.create_bucket(b2_bucket_name, "allPrivate", lifecycle_rules=life_cycle_rules)
