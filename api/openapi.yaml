@@ -1,0 +1,214 @@
+info:
+  title: Photos API
+  version: 0.1.0
+tags:
+- name: Album
+- name: Media
+paths:
+  /album/:
+    post:
+      parameters: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Album'
+          description: Successful response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+          description: Validation error
+      tags:
+      - Album
+      summary: Add Album
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddAlbumIn'
+  /media/:
+    get:
+      parameters:
+      - in: query
+        name: media_id
+        schema:
+          type: string
+          format: uuid
+        required: false
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Media'
+          description: Successful response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+          description: Validation error
+      tags:
+      - Media
+      summary: Get Media
+    post:
+      parameters: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Media'
+          description: Successful response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+          description: Validation error
+      tags:
+      - Media
+      summary: Add Media
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddMediaIn'
+  /media/add-to-album:
+    post:
+      parameters: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Media'
+          description: Successful response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+          description: Validation error
+      tags:
+      - Media
+      summary: Add Media To Album
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddMediaToAlbumIn'
+openapi: 3.0.3
+components:
+  schemas:
+    ValidationError:
+      properties:
+        detail:
+          type: object
+          properties:
+            <location>:
+              type: object
+              properties:
+                <field_name>:
+                  type: array
+                  items:
+                    type: string
+        message:
+          type: string
+      type: object
+    AddAlbumIn:
+      type: object
+      properties:
+        name:
+          type: string
+    Album:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        thumbnail_path:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    Media:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        uploader:
+          type: string
+        uploader_id:
+          type: string
+        uploader_url:
+          type: string
+        upload_date:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        duration:
+          type: integer
+        webpage_url:
+          type: string
+        extractor_key:
+          type: string
+        media_type:
+          type: string
+        thumbnail_path:
+          type: string
+        media_path:
+          type: string
+        width:
+          type: integer
+        height:
+          type: integer
+        albums:
+          type: array
+          items:
+            $ref: '#/components/schemas/Album'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    AddMediaIn:
+      type: object
+      properties:
+        title:
+          type: string
+        thumbnail_path:
+          type: string
+        media_type:
+          type: string
+        album_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+    AddMediaToAlbumIn:
+      type: object
+      properties:
+        media_id:
+          type: string
+          format: uuid
+        album_id:
+          type: string
+          format: uuid
+
