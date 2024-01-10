@@ -1,8 +1,10 @@
 from apiflask import APIBlueprint, Schema
-from marshmallow.fields import String
+from apiflask.fields import String, Integer, List, Nested, Boolean
+from sqlalchemy import desc, asc
 
 from api.schemas.main import AlbumSchema
 from models.base import AlbumModel
+from nguylinc_python_utils.misc import validate_ksuid
 
 album_bp = APIBlueprint("Album", __name__, url_prefix="/album")
 
@@ -23,3 +25,67 @@ def add_album(params):
     session.refresh(album)
     print(album.to_dict())
     return album.to_dict()
+
+
+# class GetAlbumIn(Schema):
+#     album_id = String()
+#
+#
+# @album_bp.get("/")
+# @album_bp.input(GetAlbumIn, arg_name="params", location="query")
+# @album_bp.output(AlbumSchema)
+# def get_album(params):
+#     from api.app import session
+#     album = session.query(AlbumModel).filter(AlbumModel.id == str(params["album_id"])).first()
+#     return album.to_dict()
+#
+#
+# class GetAlbumPhotosIn(Schema):
+#     album_id = String()
+
+
+class QueryAlbumsIn(Schema):
+    last_id = String(load_default=None)
+    limit = Integer(load_default=30)
+    descending = Boolean(load_default=True)
+
+
+class QueryAlbumsOut(Schema):
+    albums = List(Nested(AlbumSchema))
+
+
+@album_bp.get("/query")
+@album_bp.input(QueryAlbumsIn, arg_name="params", location="query")
+@album_bp.output(QueryAlbumsOut)
+def query_albums(params):
+    from api.app import session
+    q = session.query(AlbumModel)
+    if params["last_id"]:
+        if params["descending"]:
+            q = q.filter(AlbumModel.id < params["last_id"])
+        else:
+            q = q.filter(AlbumModel.id > params["last_id"])
+    if params["descending"]:
+        q = q.order_by(desc(AlbumModel.id))
+    else:
+        q = q.order_by(asc(AlbumModel.id))
+    q = q.limit(params["limit"])
+    albums = [album.to_dict() for album in q]
+    return {
+        "albums": albums
+    }
+
+
+class DeleteAlbumIn(Schema):
+    album_ids = List(String(validate=validate_ksuid))
+
+
+@album_bp.delete("/")
+@album_bp.input(DeleteAlbumIn, arg_name="params")
+@album_bp.output({})
+def delete_album(params):
+    from api.app import session
+    for album_id in params["album_ids"]:
+        session.query(AlbumModel).filter(AlbumModel.id == album_id).delete()
+    session.commit()
+    return {}

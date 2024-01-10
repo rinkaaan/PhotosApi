@@ -1,9 +1,11 @@
 from apiflask import Schema
-from apiflask.fields import Integer, List, Nested, String, UUID, DateTime
+from apiflask.fields import Integer, List, Nested, String, DateTime
+
+from nguylinc_python_utils.misc import validate_ksuid
 
 
 class AlbumSchema(Schema):
-    id = UUID()
+    id = String(validate=validate_ksuid)
     name = String()
     thumbnail_path = String()
     created_at = DateTime()
@@ -11,7 +13,7 @@ class AlbumSchema(Schema):
 
 
 class MediaSchema(Schema):
-    id = UUID()
+    id = String(validate=validate_ksuid)
     title = String()
     description = String()
     uploader = String()

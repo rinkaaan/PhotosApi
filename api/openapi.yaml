@@ -29,6 +29,28 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/AddAlbumIn'
+    delete:
+      parameters: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+          description: Validation error
+      tags:
+      - Album
+      summary: Delete Album
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteAlbumIn'
   /media/:
     get:
       parameters:
@@ -36,7 +58,6 @@ paths:
         name: media_id
         schema:
           type: string
-          format: uuid
         required: false
       responses:
         '200':
@@ -77,6 +98,111 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/AddMediaIn'
+    delete:
+      parameters: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+          description: Validation error
+      tags:
+      - Media
+      summary: Delete Media
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteMediaIn'
+  /album/query:
+    get:
+      parameters:
+      - in: query
+        name: last_id
+        schema:
+          type: string
+          default: null
+          nullable: true
+        required: false
+      - in: query
+        name: limit
+        schema:
+          type: integer
+          default: 30
+        required: false
+      - in: query
+        name: descending
+        schema:
+          type: boolean
+          default: true
+        required: false
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryAlbumsOut'
+          description: Successful response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+          description: Validation error
+      tags:
+      - Album
+      summary: Query Albums
+  /media/query:
+    get:
+      parameters:
+      - in: query
+        name: album_id
+        schema:
+          type: string
+          default: null
+          nullable: true
+        required: false
+      - in: query
+        name: last_id
+        schema:
+          type: string
+          default: null
+          nullable: true
+        required: false
+      - in: query
+        name: limit
+        schema:
+          type: integer
+          default: 30
+        required: false
+      - in: query
+        name: descending
+        schema:
+          type: boolean
+          default: true
+        required: false
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryMediaOut'
+          description: Successful response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+          description: Validation error
+      tags:
+      - Media
+      summary: Query Media
   /media/add-to-album:
     post:
       parameters: []
@@ -84,8 +210,7 @@ paths:
         '200':
           content:
             application/json:
-              schema:
-                $ref: '#/components/schemas/Media'
+              schema: {}
           description: Successful response
         '422':
           content:
@@ -101,6 +226,29 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/AddMediaToAlbumIn'
+  /media/remove-from-album:
+    post:
+      parameters: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+          description: Validation error
+      tags:
+      - Media
+      summary: Remove Media From Album
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RemoveMediaFromAlbumIn'
 openapi: 3.0.3
 components:
   schemas:
@@ -129,7 +277,6 @@ components:
       properties:
         id:
           type: string
-          format: uuid
         name:
           type: string
         thumbnail_path:
@@ -140,12 +287,18 @@ components:
         updated_at:
           type: string
           format: date-time
+    DeleteAlbumIn:
+      type: object
+      properties:
+        album_ids:
+          type: array
+          items:
+            type: string
     Media:
       type: object
       properties:
         id:
           type: string
-          format: uuid
         title:
           type: string
         description:
@@ -201,14 +354,39 @@ components:
           type: array
           items:
             type: string
-            format: uuid
+    DeleteMediaIn:
+      type: object
+      properties:
+        media_ids:
+          type: array
+          items:
+            type: string
+    QueryAlbumsOut:
+      type: object
+      properties:
+        albums:
+          type: array
+          items:
+            $ref: '#/components/schemas/Album'
+    QueryMediaOut:
+      type: object
+      properties:
+        media:
+          type: array
+          items:
+            $ref: '#/components/schemas/Media'
     AddMediaToAlbumIn:
       type: object
       properties:
         media_id:
           type: string
-          format: uuid
         album_id:
           type: string
-          format: uuid
+    RemoveMediaFromAlbumIn:
+      type: object
+      properties:
+        media_id:
+          type: string
+        album_id:
+          type: string
 
