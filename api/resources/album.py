@@ -1,6 +1,7 @@
-from apiflask import APIBlueprint, Schema
+from apiflask import APIBlueprint, Schema, HTTPError
 from apiflask.fields import String, Integer, List, Nested, Boolean
 from sqlalchemy import desc, asc
+from sqlalchemy.exc import IntegrityError
 
 from api.schemas.main import AlbumSchema
 from models.base import AlbumModel
@@ -18,12 +19,15 @@ class AddAlbumIn(Schema):
 @album_bp.output(AlbumSchema)
 def add_album(params):
     from api.app import session
-    album = AlbumModel()
-    album.name = params["name"]
-    session.add(album)
-    session.commit()
-    session.refresh(album)
-    print(album.to_dict())
+    try:
+        album = AlbumModel()
+        album.name = params["name"]
+        session.add(album)
+        session.commit()
+        session.refresh(album)
+    except IntegrityError:
+        session.rollback()
+        raise HTTPError(400, "Album already exists")
     return album.to_dict()
 
 

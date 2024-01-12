@@ -14,7 +14,7 @@ session = init_sqlite_db(Base)
 flask_app.config["SPEC_FORMAT"] = "yaml"
 flask_app.config["LOCAL_SPEC_PATH"] = "openapi.yaml"
 flask_app.config["SYNC_LOCAL_SPEC"] = True
-CORS(flask_app, supports_credentials=False)
+CORS(flask_app, supports_credentials=False, origins="*", allow_headers="*")
 
 flask_app.register_blueprint(album_bp)
 flask_app.register_blueprint(media_bp)
