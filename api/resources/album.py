@@ -54,8 +54,16 @@ class QueryAlbumsIn(Schema):
     descending = Boolean(load_default=True)
 
 
+# # Query using limit and offset instead
+# class QueryAlbumsIn(Schema):
+#     limit = Integer(load_default=30)
+#     offset = Integer(load_default=0)
+#     descending = Boolean(load_default=True)
+
+
 class QueryAlbumsOut(Schema):
     albums = List(Nested(AlbumSchema))
+    no_more_albums = Boolean()
 
 
 @album_bp.get("/query")
@@ -76,8 +84,27 @@ def query_albums(params):
     q = q.limit(params["limit"])
     albums = [album.to_dict() for album in q]
     return {
-        "albums": albums
+        "albums": albums,
+        "no_more_albums": len(albums) < params["limit"]
     }
+
+
+# @album_bp.get("/query")
+# @album_bp.input(QueryAlbumsIn, arg_name="params", location="query")
+# @album_bp.output(QueryAlbumsOut)
+# def query_albums(params):
+#     from api.app import session
+#     q = session.query(AlbumModel)
+#     if params["descending"]:
+#         q = q.order_by(desc(AlbumModel.id))
+#     else:
+#         q = q.order_by(asc(AlbumModel.id))
+#     q = q.offset(params["offset"])
+#     q = q.limit(params["limit"])
+#     albums = [album.to_dict() for album in q]
+#     return {
+#         "albums": albums
+#     }
 
 
 class DeleteAlbumIn(Schema):

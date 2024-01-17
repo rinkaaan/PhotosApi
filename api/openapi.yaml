@@ -370,6 +370,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Album'
+        no_more_albums:
+          type: boolean
     QueryMediaOut:
       type: object
       properties:

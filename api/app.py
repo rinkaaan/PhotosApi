@@ -1,3 +1,5 @@
+import time
+
 from apiflask import APIFlask
 from flask_cors import CORS
 from flask_socketio import SocketIO
@@ -23,6 +25,20 @@ flask_app.register_blueprint(media_bp)
 @socketio.on("connect")
 def on_connect():
     print("Client connected!")
+
+
+@flask_app.teardown_appcontext
+def shutdown_session(exception=None):
+    if session:
+        session.remove()
+
+@flask_app.before_request
+def add_fake_delay():
+    # fake_delay = 100
+    # fake_delay = 0.5
+    fake_delay = 1
+    # fake_delay = 0
+    time.sleep(fake_delay)
 
 
 port = 34200
