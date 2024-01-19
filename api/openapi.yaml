@@ -5,7 +5,7 @@ tags:
 - name: Album
 - name: Media
 servers:
-- url: http://localhost:34200/
+- url: http://localhost:34201/
 paths:
   /album/:
     post:

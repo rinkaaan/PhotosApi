@@ -6,3 +6,4 @@ apiflask[yaml]
 flask-cors
 flask-socketio
 svix-ksuid
+SQLAlchemy
