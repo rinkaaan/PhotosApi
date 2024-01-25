@@ -31,34 +31,11 @@ def add_album(params):
     return album.to_dict()
 
 
-# class GetAlbumIn(Schema):
-#     album_id = String()
-#
-#
-# @album_bp.get("/")
-# @album_bp.input(GetAlbumIn, arg_name="params", location="query")
-# @album_bp.output(AlbumSchema)
-# def get_album(params):
-#     from api.app import session
-#     album = session.query(AlbumModel).filter(AlbumModel.id == str(params["album_id"])).first()
-#     return album.to_dict()
-#
-#
-# class GetAlbumPhotosIn(Schema):
-#     album_id = String()
-
-
 class QueryAlbumsIn(Schema):
     last_id = String(load_default=None)
     limit = Integer(load_default=30)
     descending = Boolean(load_default=True)
-
-
-# # Query using limit and offset instead
-# class QueryAlbumsIn(Schema):
-#     limit = Integer(load_default=30)
-#     offset = Integer(load_default=0)
-#     descending = Boolean(load_default=True)
+    search = String(load_default=None)
 
 
 class QueryAlbumsOut(Schema):
@@ -72,39 +49,27 @@ class QueryAlbumsOut(Schema):
 def query_albums(params):
     from api.app import session
     q = session.query(AlbumModel)
+
     if params["last_id"]:
         if params["descending"]:
             q = q.filter(AlbumModel.id < params["last_id"])
         else:
             q = q.filter(AlbumModel.id > params["last_id"])
+
+    if params["search"]:
+        q = q.filter(AlbumModel.name.contains(params["search"]))
+
     if params["descending"]:
         q = q.order_by(desc(AlbumModel.id))
     else:
         q = q.order_by(asc(AlbumModel.id))
+
     q = q.limit(params["limit"])
     albums = [album.to_dict() for album in q]
     return {
         "albums": albums,
         "no_more_albums": len(albums) < params["limit"]
     }
-
-
-# @album_bp.get("/query")
-# @album_bp.input(QueryAlbumsIn, arg_name="params", location="query")
-# @album_bp.output(QueryAlbumsOut)
-# def query_albums(params):
-#     from api.app import session
-#     q = session.query(AlbumModel)
-#     if params["descending"]:
-#         q = q.order_by(desc(AlbumModel.id))
-#     else:
-#         q = q.order_by(asc(AlbumModel.id))
-#     q = q.offset(params["offset"])
-#     q = q.limit(params["limit"])
-#     albums = [album.to_dict() for album in q]
-#     return {
-#         "albums": albums
-#     }
 
 
 class DeleteAlbumIn(Schema):

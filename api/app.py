@@ -37,8 +37,8 @@ def shutdown_session(exception=None):
 def add_fake_delay():
     # fake_delay = 100
     # fake_delay = 0.5
-    fake_delay = 1
-    # fake_delay = 0
+    # fake_delay = 1
+    fake_delay = 0
     time.sleep(fake_delay)
 
 

@@ -4,8 +4,6 @@ info:
 tags:
 - name: Album
 - name: Media
-servers:
-- url: http://localhost:34201/
 paths:
   /album/:
     post:
@@ -143,6 +141,13 @@ paths:
         schema:
           type: boolean
           default: true
+        required: false
+      - in: query
+        name: search
+        schema:
+          type: string
+          default: null
+          nullable: true
         required: false
       responses:
         '200':
@@ -393,3 +398,4 @@ components:
           type: string
         album_id:
           type: string
+
