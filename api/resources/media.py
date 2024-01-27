@@ -1,3 +1,6 @@
+import json
+import subprocess
+
 from apiflask import APIBlueprint, Schema, HTTPError
 from apiflask.fields import String, List, Integer, Boolean, Nested
 from sqlalchemy import desc
@@ -11,9 +14,10 @@ media_bp = APIBlueprint("Media", __name__, url_prefix="/media")
 
 
 class AddMediaIn(Schema):
-    title = String()
-    thumbnail_path = String()
-    media_type = String()
+    # title = String()
+    # thumbnail_path = String()
+    media_url = String()
+    # media_type = String()
     album_ids = List(String(validate=validate_ksuid))
 
 
@@ -21,19 +25,94 @@ class AddMediaIn(Schema):
 @media_bp.input(AddMediaIn, arg_name="params")
 @media_bp.output(MediaSchema)
 def add_media(params):
-    from api.app import session
-    media = MediaModel()
-    media.title = params["title"]
-    media.thumbnail_path = params["thumbnail_path"]
-    media.media_type = params["media_type"]
-    media.albums = []
-    for album_id in params["album_ids"]:
-        album = session.query(AlbumModel).filter(AlbumModel.id == str(album_id)).first()
-        media.albums.append(album)
-    session.add(media)
-    session.commit()
-    session.refresh(media)
-    return media.to_dict()
+    # from api.app import session
+    # media = MediaModel()
+    # media.title = params["title"]
+    # media.thumbnail_path = params["thumbnail_path"]
+    # media.media_type = params["media_type"]
+    # media.albums = []
+    # for album_id in params["album_ids"]:
+    #     album = session.query(AlbumModel).filter(AlbumModel.id == str(album_id)).first()
+    #     media.albums.append(album)
+    # session.add(media)
+    # session.commit()
+    # session.refresh(media)
+    # return media.to_dict()
+
+    command = f"yt-dlp --write-info-json --skip-download -o metadata --cookies ~/Desktop/cookies.txt \"{params['media_url']}\""
+    process = subprocess.run(command, shell=True)
+    if process.returncode == 0:
+        # read files/metadata.json
+        with open("metadata.info.json", "r") as f:
+            metadata = json.load(f)
+
+            id = metadata["id"]
+            title = metadata["title"]
+            thumbnail = metadata["thumbnail"]
+            # description = metadata["description"]
+            extractor_key = metadata["extractor_key"]
+            uploader_id = metadata["uploader_id"]
+            duration = metadata["duration"]
+            webpage_url = metadata["webpage_url"]
+
+            print(id)
+            print(title)
+            print(thumbnail)
+            # print(description)
+            print(extractor_key)
+            print(uploader_id)
+            print(duration)
+            print(webpage_url)
+
+            subprocess.run("rm metadata.info.json", shell=True)
+    else:
+        command = f"gallery-dl --no-download --dump-json --cookies ~/Desktop/cookies.txt \"{params['media_url']}\" > metadata.json"
+        process = subprocess.run(command, shell=True)
+        if process.returncode == 0:
+            # read files/metadata.json
+            with open("metadata.json", "r") as f:
+                metadata = json.load(f)
+
+                print(metadata)
+
+                for image_obj in metadata:
+                    # skip objects with length != 3
+                    if len(image_obj) != 3:
+                        continue
+                    image_url = image_obj[1]
+                    image_data = image_obj[2]
+                    category = image_data["category"]
+
+                    if category == "twitter":
+                        image_data = image_obj[2]
+                        author = image_data["author"]["name"]
+                        tweet_id = image_data["tweet_id"]
+                        webpage_url = f"https://twitter.com/{author}/status/{tweet_id}"
+                        # content = image_data["content"]
+
+                        print(image_url)
+                        print(author)
+                        print(webpage_url)
+                        # print(content)
+                    elif category == "instagram":
+                        image_data = image_obj[2]
+                        username = image_data["username"]
+                        post_shortcode = image_data["post_shortcode"]
+                        webpage_url = f"https://www.instagram.com/p/{post_shortcode}"
+                        # description = image_data["description"]
+
+                        print(image_url)
+                        print(username)
+                        print(webpage_url)
+                        # print(description)
+                    else:
+                        raise HTTPError(422, "Unsupported photo website")
+
+                subprocess.run("rm metadata.json", shell=True)
+        else:
+            raise HTTPError(400, "Invalid media URL")
+
+    print(params)
 
 
 class AddMediaToAlbumIn(Schema):
