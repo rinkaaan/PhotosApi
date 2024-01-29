@@ -2,3 +2,4 @@
 /poc/backblaze/test.mp4
 *.db
 /poc/files/*
+.env

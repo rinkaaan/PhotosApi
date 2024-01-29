@@ -14,8 +14,7 @@ info = InMemoryAccountInfo()
 if __name__ == "__main__":
     b2_api = B2Api(info)
     b2_api.authorize_account("production", b2_account_id, b2_application_key)
-    # b2 rm --versions --recursive nguylinc-photos
-    # b2 rm --versions --recursive nguylinc
+    # b2 rm --versions --recursive <bucket_name>
     # bucket = b2_api.get_bucket_by_name("nguylinc-photos")
     # b2_api.delete_bucket(bucket)
     bucket = b2_api.get_bucket_by_name("nguylinc")

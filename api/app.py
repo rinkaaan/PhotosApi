@@ -1,6 +1,9 @@
+import os
 import time
 
 from apiflask import APIFlask
+from b2sdk.v2 import InMemoryAccountInfo, B2Api
+from dotenv import load_dotenv
 from flask_cors import CORS
 from flask_socketio import SocketIO
 
@@ -8,6 +11,17 @@ from api.resources.album import album_bp
 from api.resources.media import media_bp
 from models.base import Base
 from nguylinc_python_utils.sqlalchemy import init_sqlite_db
+
+load_dotenv()
+
+b2_account_id = os.getenv("B2_ACCOUNT_ID")
+b2_application_key = os.getenv("B2_APPLICATION_KEY")
+b2_bucket_name = os.getenv("B2_BUCKET_NAME")
+
+info = InMemoryAccountInfo()
+b2_api = B2Api(info)
+b2_api.authorize_account("production", b2_account_id, b2_application_key)
+bucket = b2_api.get_bucket_by_name(b2_bucket_name)
 
 app = APIFlask(__name__, title="Photos API", version="0.1.0", spec_path="/openapi.yaml", docs_ui="rapidoc")
 socketio = SocketIO(app, cors_allowed_origins="*")

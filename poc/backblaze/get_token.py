@@ -19,5 +19,5 @@ if __name__ == "__main__":
 
     # token = b2_api.get_download_authorization(bucket_name=b2_bucket_name, file_name="test.mp4")
     # print(token)
-    token = bucket.get_download_authorization(file_name_prefix="*", valid_duration_in_seconds=3600)
+    token = bucket.get_download_authorization(file_name_prefix="", valid_duration_in_seconds=604800)
     print(token)
