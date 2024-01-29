@@ -169,13 +169,6 @@ paths:
     get:
       parameters:
       - in: query
-        name: album_id
-        schema:
-          type: string
-          default: null
-          nullable: true
-        required: false
-      - in: query
         name: last_id
         schema:
           type: string
@@ -193,6 +186,13 @@ paths:
         schema:
           type: boolean
           default: true
+        required: false
+      - in: query
+        name: album_id
+        schema:
+          type: string
+          default: null
+          nullable: true
         required: false
       responses:
         '200':
@@ -351,11 +351,7 @@ components:
     AddMediaIn:
       type: object
       properties:
-        title:
-          type: string
-        thumbnail_path:
-          type: string
-        media_type:
+        media_url:
           type: string
         album_ids:
           type: array
@@ -384,6 +380,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Media'
+        no_more_media:
+          type: boolean
     AddMediaToAlbumIn:
       type: object
       properties:

@@ -3,3 +3,6 @@
 *.db
 /poc/files/*
 .env
+*.jpeg
+*.jpg
+*.png

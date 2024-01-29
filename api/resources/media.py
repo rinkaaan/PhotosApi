@@ -65,16 +65,15 @@ def add_media(params):
             thumbnail_path = f"thumbnails/{website}/{id}.{thumbnail_extension}"
             command = f"curl \"{thumbnail}\" -o \"{thumbnail_filename}\""
             process = subprocess.run(command, shell=True)
-            thumbnail = bucket.get_download_url(thumbnail_path)
 
             if process.returncode != 0:
                 raise HTTPError(400, "Error downloading thumbnail")
 
-            # upload thumbnail to backblaze
             bucket.upload_local_file(
                 local_file=thumbnail_filename,
                 file_name=thumbnail_path,
             )
+            subprocess.run(f"rm thumbnail.{thumbnail_extension}", shell=True)
 
             cache_domain = os.getenv("CACHE_DOMAIN")
             thumbnail = f"{cache_domain}/file/{bucket.name}/{thumbnail_path}"
@@ -93,21 +92,31 @@ def add_media(params):
                 media.albums.append(album)
 
             # if uploader not an album, add as new album
-            q = session.query(AlbumModel).filter(AlbumModel.name == f"uploader#{uploader}")
+            q = session.query(AlbumModel).filter(AlbumModel.name == f"uploader={uploader}")
             if not q.first():
-                print(f"uploader#{uploader} not found, creating new album")
+                print(f"uploader={uploader} not found, creating new album")
                 album = AlbumModel()
-                album.name = f"uploader#{uploader}"
+                album.name = f"uploader={uploader}"
                 album.thumbnail_path = thumbnail
                 session.add(album)
                 media.albums.append(album)
 
-            # if extractor_key not an album, add as new album
-            q = session.query(AlbumModel).filter(AlbumModel.name == f"extractor_key#{website}")
+            # if website not an album, add as new album
+            q = session.query(AlbumModel).filter(AlbumModel.name == f"website={website}")
             if not q.first():
-                print(f"website#{website} not found, creating new album")
+                print(f"website={website} not found, creating new album")
                 album = AlbumModel()
-                album.name = f"website#{website}"
+                album.name = f"website={website}"
+                album.thumbnail_path = thumbnail
+                session.add(album)
+                media.albums.append(album)
+
+            # if media_type not an album, add as new album
+            q = session.query(AlbumModel).filter(AlbumModel.name == f"media_type=Videos")
+            if not q.first():
+                print(f"media_type=video not found, creating new album")
+                album = AlbumModel()
+                album.name = f"media_type=Videos"
                 album.thumbnail_path = thumbnail
                 session.add(album)
                 media.albums.append(album)
@@ -162,6 +171,8 @@ def add_media(params):
     #     else:
     #         raise HTTPError(400, "Invalid media URL")
 
+    # media.albums_text = " ".join([f"#{album.name}" for album in media.albums])
+
     try:
         session.add(media)
         session.commit()
@@ -170,7 +181,9 @@ def add_media(params):
         session.rollback()
         raise HTTPError(400, "Media already exists")
 
-    return media.to_dict()
+    media_dict = media.to_dict()
+    media_dict["albums"] = [album.to_dict() for album in media.albums]
+    return media_dict
 
 
 class AddMediaToAlbumIn(Schema):
@@ -218,7 +231,7 @@ def remove_media_from_album(params):
 
 
 class GetMediaIn(Schema):
-    media_id = String(validate=validate_ksuid)
+    media_id = String()
 
 
 @media_bp.get("/")
@@ -227,19 +240,24 @@ class GetMediaIn(Schema):
 def get_media(params):
     from api.app import session
     media = session.query(MediaModel).filter(MediaModel.id == str(params["media_id"])).first()
-    albums = [album.to_dict() for album in media.albums]
-    return {**media.to_dict(), "albums": albums}
+    if not media:
+        raise HTTPError(404, "Media not found")
+    media_dict = media.to_dict()
+    media_dict["albums"] = [album.to_dict() for album in media.albums]
+    return media_dict
 
 
 class QueryMediaIn(Schema):
-    album_id = String(load_default=None, validate=validate_ksuid)
     last_id = String(load_default=None)
     limit = Integer(load_default=30)
     descending = Boolean(load_default=True)
+    # search = String(load_default=None)
+    album_id = String(load_default=None, validate=validate_ksuid)
 
 
 class QueryMediaOut(Schema):
     media = List(Nested(MediaSchema))
+    no_more_media = Boolean()
 
 
 @media_bp.get("/query")
@@ -248,13 +266,19 @@ class QueryMediaOut(Schema):
 def query_media(params):
     from api.app import session
     q = session.query(MediaModel)
+
     if params["album_id"]:
         q = q.filter(MediaModel.albums.any(id=str(params["album_id"])))
+
     if params["last_id"]:
         if params["descending"]:
             q = q.filter(MediaModel.id < params["last_id"])
         else:
             q = q.filter(MediaModel.id > params["last_id"])
+
+    # if params["search"]:
+    #     q = q.filter(MediaModel.title.contains(params["search"]))
+
     if params["descending"]:
         q = q.order_by(desc(MediaModel.id))
     q = q.limit(params["limit"])
@@ -269,9 +293,10 @@ def query_media(params):
             media_dict["albums"] = [album.to_dict() for album in media.albums]
             media_list.append(media_dict)
 
-    # media_list = [media.to_dict() for media in q.all()]
-
-    return {"media": media_list}
+    return {
+        "media": media_list,
+        "no_more_media": len(media_list) < params["limit"]
+    }
 
 
 class DeleteMediaIn(Schema):
